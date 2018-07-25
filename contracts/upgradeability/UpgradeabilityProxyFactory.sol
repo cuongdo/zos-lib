@@ -5,6 +5,8 @@ import './AdminUpgradeabilityProxy.sol';
 /**
  * @title UpgradeabilityProxyFactory
  * @dev Factory to create upgradeability proxies.
+ * 
+ * NOTE(cuongdo): why is this needed? for the event?
  */
 contract UpgradeabilityProxyFactory {
   /**

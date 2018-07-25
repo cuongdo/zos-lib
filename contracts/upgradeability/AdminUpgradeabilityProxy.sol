@@ -22,6 +22,11 @@ contract AdminUpgradeabilityProxy is UpgradeabilityProxy {
    * @dev Storage slot with the admin of the contract.
    * This is the keccak-256 hash of "org.zeppelinos.proxy.admin", and is
    * validated in the constructor.
+   * 
+   * NOTE(cuongdo): Static sized contract variables are assigned sequential slots
+   * starting at 0. Other variables are assigned slots randomly. So, the following
+   * slot is as good as any.
+   * 
    */
   bytes32 private constant ADMIN_SLOT = 0x10d6a54a4754c8869d6886b5f5d7fbfa5b4522237ea5c60d11bc4e7a1ff9390b;
 
@@ -92,6 +97,8 @@ contract AdminUpgradeabilityProxy is UpgradeabilityProxy {
    * It should include the signature and the parameters of the function to be
    * called, as described in
    * https://solidity.readthedocs.io/en/develop/abi-spec.html#function-selector-and-argument-encoding.
+   * 
+   * NOTE(cuongdo): this allows an atomic upgrade & initialization of new contract
    */
   function upgradeToAndCall(address newImplementation, bytes data) payable external ifAdmin {
     _upgradeTo(newImplementation);
@@ -102,6 +109,9 @@ contract AdminUpgradeabilityProxy is UpgradeabilityProxy {
    * @return The admin slot.
    */
   function _admin() internal view returns (address adm) {
+    // NOTE(cuongdo): direct assembly load of admin address from the admin slot.
+    // needed because we need to avoid conflicts between the storage slots used
+    // by the proxy contract and the contract we're proxying
     bytes32 slot = ADMIN_SLOT;
     assembly {
       adm := sload(slot)
@@ -124,6 +134,10 @@ contract AdminUpgradeabilityProxy is UpgradeabilityProxy {
    * @dev Only fall back when the sender is not the admin.
    */
   function _willFallback() internal {
+    // NOTE(cuongdo): note that this refuses to proxy contract calls when the
+    // proxy admin is the sender. this addresses a critical issue found during
+    // an audit:
+    // https://medium.com/nomic-labs-blog/zeppelinos-smart-contracts-audit-dc772cfae224#abae
     require(msg.sender != _admin(), "Cannot call fallback function from the proxy admin");
     super._willFallback();
   }

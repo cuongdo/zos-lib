@@ -13,6 +13,8 @@ contract UpgradeabilityProxy is Proxy {
   /**
    * @dev Emitted when the implementation is upgraded.
    * @param implementation Address of the new implementation.
+   * 
+   * NOTE(cuongdo): I like this event. It provides some transparency for audits.
    */
   event Upgraded(address implementation);
 
@@ -59,7 +61,9 @@ contract UpgradeabilityProxy is Proxy {
    */
   function _setImplementation(address newImplementation) private {
     require(AddressUtils.isContract(newImplementation), "Cannot set a proxy implementation to a non-contract address");
-
+    
+    // NOTE(cuongdo): constants are not supported by inline assembly (why?), so
+    // we need this temp variable
     bytes32 slot = IMPLEMENTATION_SLOT;
 
     assembly {
